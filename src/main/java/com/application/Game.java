@@ -1,5 +1,6 @@
-package java.com.application;
+package com.application;
 import java.util.List;
+
 
 public class Game {
 
@@ -7,6 +8,8 @@ public class Game {
     private String publisher;
     private String releaseDate;
     private List<String> availablePlaforms;
+
+    public Game(){}
 
 
     public Game(String name, String publisher, String releaseDate, List<String> availablePlaforms){

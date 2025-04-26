@@ -7,16 +7,16 @@ public class Game {
     private String name;
     private String publisher;
     private String releaseDate;
-    private List<String> availablePlaforms;
+    private List<String> availablePlatforms;
 
     public Game(){}
 
 
-    public Game(String name, String publisher, String releaseDate, List<String> availablePlaforms){
+    public Game(String name, String publisher, String releaseDate, List<String> availablePlatforms){
         this.name=name;
         this.publisher=publisher;
         this.releaseDate=releaseDate;
-        this.availablePlaforms=availablePlaforms;
+        this.availablePlatforms=availablePlatforms;
     }
 
     public String getName() {
@@ -43,11 +43,11 @@ public class Game {
         this.releaseDate = releaseDate;
     }
 
-    public List<String> getAvailablePlaforms() {
-        return availablePlaforms;
+    public List<String> getAvailablePlatforms() {
+        return availablePlatforms;
     }
 
-    public void setAvailablePlaforms(List<String> availablePlaforms) {
-        this.availablePlaforms = availablePlaforms;
+    public void setAvailablePlatforms(List<String> availablePlaforms) {
+        this.availablePlatforms = availablePlaforms;
     }
 }

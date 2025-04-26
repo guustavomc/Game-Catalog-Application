@@ -32,9 +32,9 @@ public class ReadGameService {
                 String releaseDate = gameNode.get("releaseDate").asText();
 
                 List<String> availablePlatforms = new ArrayList<>();
-                JsonNode availablePlaformsNode = gameNode.get("availablePlaforms");
+                JsonNode availablePlatformsNode = gameNode.get("availablePlatforms");
 
-                for (JsonNode platformNode : availablePlaformsNode){
+                for (JsonNode platformNode : availablePlatformsNode){
                     availablePlatforms.add(platformNode.asText().trim());
                 }
 
@@ -61,7 +61,7 @@ public class ReadGameService {
     }
 
     public List<Game> findGamesInPlatform(String name){
-        return listGame.stream().filter(game -> game.getAvailablePlaforms().stream().anyMatch(t -> t.trim().equalsIgnoreCase(name))).collect(Collectors.toList());
+        return listGame.stream().filter(game -> game.getAvailablePlatforms().stream().anyMatch(t -> t.trim().equalsIgnoreCase(name))).collect(Collectors.toList());
     }
 
     public void addGame(Game game){

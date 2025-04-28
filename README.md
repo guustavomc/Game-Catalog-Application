@@ -90,7 +90,7 @@ The application is built using Maven to create an executable JAR file.
 1. **Build the JAR**:
 
    ```bash
-   mvn clean package -DskipTests
+   mvn clean package 
    ```
 
    - This compiles the code, runs the build, and generates `target/Game-Catalog-Application-1.0-SNAPSHOT.jar`.
@@ -155,7 +155,8 @@ The application is packaged into a Docker container for deployment.
 2. **Test the Docker Container**:
 
    ```bash
-   docker run -p 8080:8080 -v $(pwd)/data:/data game-api
+   docker run -p 8080:8080 -v ${PWD}/data:/data game-api
+
    ```
 
     - Maps port `8080` on the host to `8080` in the container.

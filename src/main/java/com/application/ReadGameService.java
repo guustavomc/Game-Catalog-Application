@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Service
 public class ReadGameService {
 
-    private static final String GAMES_FILE_PATH = "data/Games.json";
+    private static final String GAMES_FILE_PATH = "/data/Games.json";
 
     private List<Game> listGame = new ArrayList<>();
 

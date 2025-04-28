@@ -1,4 +1,5 @@
 package com.application;
+import java.io.File;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.io.FileOutputStream;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 @Service
 public class ReadGameService {
 
+    private static final String GAMES_FILE_PATH = "data/Games.json";
+
     private List<Game> listGame = new ArrayList<>();
 
     @PostConstruct
@@ -23,8 +26,9 @@ public class ReadGameService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try{
-            ClassPathResource resource = new ClassPathResource("Games.json");
-            JsonNode rootNode = objectMapper.readTree(resource.getInputStream());
+            File file = new File(GAMES_FILE_PATH);
+
+            JsonNode rootNode = objectMapper.readTree(file);
 
             for(JsonNode gameNode : rootNode){
                 String name = gameNode.get("name").asText();
@@ -70,7 +74,7 @@ public class ReadGameService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
-            String updatedJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(listGame);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(GAMES_FILE_PATH), listGame);
 
             ClassPathResource resource = new ClassPathResource("Games.json");
 

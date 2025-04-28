@@ -71,6 +71,12 @@ public class ReadGameService {
     public void addGame(Game game){
         listGame.add(game);
 
+        saveGamesToFile();
+
+
+    }
+
+    private void saveGamesToFile() {
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
@@ -85,8 +91,17 @@ public class ReadGameService {
         } catch (IOException  e) {
             throw new RuntimeException("Failed to update Games.json", e);
         }
+    }
 
-
+    public boolean updateGame(String gameName, Game updatedGame){
+        for (int i=0;i<listGame.size();i++){
+            if (listGame.get(i).getName().equalsIgnoreCase(gameName)){
+                listGame.set(i,updatedGame);
+                saveGamesToFile();
+                return true;
+            }
+        }
+        return false;
     }
 
 }

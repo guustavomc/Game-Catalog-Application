@@ -110,17 +110,69 @@ The application is built using Maven to create an executable JAR file.
 
    ```bash
    # Get all Games
-   curl http://localhost:8080/api/game
+   http://localhost:8080/api/game
    
    # Get Game with name The Legend of Zelda: Breath of the Wild
-   curl http://localhost:8080/api/game/name/The Legend of Zelda: Breath of the Wild
+   http://localhost:8080/api/game/name/The Legend of Zelda: Breath of the Wild
    
    # Get Games from publisher Nintendo
-   curl http://localhost:8080/api/game/publisher/Nintendo
+   http://localhost:8080/api/game/publisher/Nintendo
  
+   # Post Game
+   http://localhost:8080/api/game
+   {
+   "name" : "The Witcher 3: Wild Hunt",
+   "publisher" : "CD Projekt",
+   "releaseDate" : "2015-05-19",
+   "availablePlatforms" : [ "PC", "PlayStation 4", "Xbox One", "Nintendo Switch" ]
+   }
+
+   # Put Game with updated information
+   http://localhost:8080/api/game/The Witcher 3: Wild Hunt
+   {
+   "name" : "The Witcher 3: Wild Hunt",
+   "publisher" : "CD Projekt",
+   "releaseDate" : "2015-05-19",
+   "availablePlatforms" : [ "PC", "PlayStation 4", "PlayStation 5", "Xbox One", "Nintendo Switch" ]
+   }
+   # Delete Game 
+   http://localhost:8080/api/game/The Witcher 3: Wild Hunt
+
    ```
 
-   **Windows Alternative** (PowerShell):
-   ```powershell
-   Invoke-WebRequest -Uri http://localhost:8080/api/game
+## Step 2: Containerize the Application with Docker
+The application is packaged into a Docker container for deployment.
+
+1. **Build the Docker Image**:
+
+   ```bash
+   docker build -t game-api .
    ```
+
+    - This creates a Docker image named `game-api` based on the `Dockerfile`.
+    - The `Dockerfile` uses a multi-stage build: Maven builds the JAR, and an Alpine JRE runs it.
+
+2. **Test the Docker Container**:
+
+   ```bash
+   docker run -p 8080:8080 -v $(pwd)/data:/data game-api
+   ```
+
+    - Maps port `8080` on the host to `8080` in the container.
+    - Test the API at `http://localhost:8080/api/game`.
+
+3. **Push the Image to Docker Hub**: To make the image available to Kubernetes, push it to Docker Hub:
+
+   ```bash
+   # Log in to Docker Hub (create an account at https://hub.docker.com if needed)
+   docker login
+   
+   # Tag the image with your Docker Hub username
+   docker tag game-api <your-dockerhub-username>/game-api:latest
+   
+   # Push the image to Docker Hub
+   docker push <your-dockerhub-username>/game-api:latest
+   ```
+
+    - Replace `<your-dockerhub-username>` with your Docker Hub username.
+    - This makes the image accessible to Kubernetes clusters, including Kind.

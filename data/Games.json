@@ -4,11 +4,6 @@
   "releaseDate" : "2017-03-03",
   "availablePlatforms" : [ "Nintendo Switch", "Wii U" ]
 }, {
-  "name" : "The Witcher 3: Wild Hunt",
-  "publisher" : "CD Projekt",
-  "releaseDate" : "2015-05-19",
-  "availablePlatforms" : [ "PC", "PlayStation 4", "Xbox One", "Nintendo Switch" ]
-}, {
   "name" : "God of War",
   "publisher" : "Sony Interactive Entertainment",
   "releaseDate" : "2018-04-20",
@@ -22,5 +17,10 @@
   "name" : "Assassin's Creed IV: Black Flag",
   "publisher" : "Ubisoft",
   "releaseDate" : "2013-10-19",
-  "availablePlatforms" : [ "Nintendo Switch", "Playstation 4", "Xbox One", "PC" ]
+  "availablePlatforms" : [ "Nintendo Switch", "Playstation 5", "Playstation 4", "Xbox One", "PC" ]
+}, {
+  "name" : "The Witcher 3: Wild Hunt",
+  "publisher" : "CD Projekt",
+  "releaseDate" : "2015-05-19",
+  "availablePlatforms" : [ "PC", "PlayStation 4", "Xbox One", "Nintendo Switch" ]
 } ]

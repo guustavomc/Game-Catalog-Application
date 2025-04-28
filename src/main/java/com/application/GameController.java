@@ -5,6 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 @RestController
 @RequestMapping("/api/game")
@@ -40,6 +44,26 @@ public class GameController {
     public ResponseEntity<String> createGame(@RequestBody Game newGame){
         service.addGame(newGame);
         return new ResponseEntity<>("Game Created", HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{name}")
+    public ResponseEntity<String> updateGame(@PathVariable("name") String name,@RequestBody Game game){
+        if (service.updateGame(name,game)) {
+            return new ResponseEntity<>("Game Updated", HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>("Game Not Found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/{name}")
+    public ResponseEntity<String> deleteGame(@PathVariable("name") String name){
+        if (service.deleteGame(name)) {
+            return new ResponseEntity<>("Game Deleted", HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>("Game Not Found", HttpStatus.NOT_FOUND);
+        }
     }
 
 

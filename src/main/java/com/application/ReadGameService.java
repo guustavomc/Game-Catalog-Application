@@ -70,28 +70,9 @@ public class ReadGameService {
 
     public void addGame(Game game){
         listGame.add(game);
-
         saveGamesToFile();
-
-
     }
 
-    private void saveGamesToFile() {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        try {
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(GAMES_FILE_PATH), listGame);
-
-            ClassPathResource resource = new ClassPathResource("Games.json");
-
-            try(OutputStreamWriter writer = new OutputStreamWriter(
-                    new FileOutputStream(resource.getFile()), StandardCharsets.UTF_8)){
-
-            }
-        } catch (IOException  e) {
-            throw new RuntimeException("Failed to update Games.json", e);
-        }
-    }
 
     public boolean updateGame(String gameName, Game updatedGame){
         for (int i=0;i<listGame.size();i++){
@@ -102,6 +83,29 @@ public class ReadGameService {
             }
         }
         return false;
+    }
+
+    public boolean deleteGame(String name){
+        boolean removed = listGame.removeIf(game -> game.getName().equalsIgnoreCase(name));
+        if (removed) {
+            saveGamesToFile();
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    private void saveGamesToFile() {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try {
+            objectMapper.writerWithDefaultPrettyPrinter()
+            .writeValue(new File(GAMES_FILE_PATH), listGame);
+
+        } catch (IOException  e) {
+            throw new RuntimeException("Failed to update Games.json", e);
+        }
     }
 
 }

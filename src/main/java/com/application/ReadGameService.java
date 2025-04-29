@@ -25,9 +25,14 @@ public class ReadGameService {
     public void getGameList(){
         ObjectMapper objectMapper = new ObjectMapper();
 
-        try{
-            File file = new File(GAMES_FILE_PATH);
+        File file = new File(GAMES_FILE_PATH);
 
+        try{
+            if(!file.exists()){
+                objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, new ArrayList<>());
+                listGame = new ArrayList<>();
+                return;
+            }
             JsonNode rootNode = objectMapper.readTree(file);
 
             for(JsonNode gameNode : rootNode){

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: game-api
-          image: <your-dockerhub-username>/game-api:latest
+          image: guustavomccb/game-api:latest
           ports:
             - containerPort: 8080
           resources:
@@ -42,3 +42,7 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: game-api-pvc

@@ -338,15 +338,12 @@ The `NodePort` Service exposes the API on a high port (e.g., `30080`).
 2. **Test the API**:
 
    ```bash
-   curl http://<INTERNAL-IP>:30080/api/pokemon
-   curl http://<INTERNAL-IP>:30080/api/pokemon/id/1
-   curl http://<INTERNAL-IP>:30080/api/pokemon/search/Squirtle
-   curl http://<INTERNAL-IP>:30080/api/pokemon/type/Grass
+   curl http://<INTERNAL-IP>:30080/api/game
    ```
 
    **Windows Alternative** (PowerShell):
    ```powershell
-   Invoke-WebRequest -Uri http://<INTERNAL-IP>:30080/api/pokemon
+   Invoke-WebRequest -Uri http://<INTERNAL-IP>:30080/api/game
    ```
 
    - Replace `<INTERNAL-IP>` with the node’s IP.
@@ -354,10 +351,10 @@ The `NodePort` Service exposes the API on a high port (e.g., `30080`).
 3. **Port Forwarding** (Alternative):
 
    ```bash
-   kubectl port-forward service/pokedex-api-service 8080:80
+   kubectl port-forward service/game-api-service 8080:80
    ```
 
-   - Access the API at `http://localhost:8080/api/pokemon`.
+   - Access the API at `http://localhost:8080/api/game`.
 
 ### 3.5 Optional: Set Up Ingress
 
@@ -447,3 +444,41 @@ For HTTP access with a domain (e.g., `pokedex.local`), use an Ingress.
    **Windows Alternative** (PowerShell):
    ```powershell
    Invoke-WebRequest -Uri http://pokedex.local/api/pokemon
+
+## Troubleshooting
+
+## If You Modify the Code
+
+If you change the application code (e.g., update `PokedexController.java` or `pokedex.json`):
+
+1. **Rebuild the JAR**:
+
+   ```bash
+   mvn clean package
+   ```
+
+   - This rebuilds the JAR file at `target/Game-Catalog-Application-1.0-SNAPSHOT.jar`.
+
+2. **Rebuild and Push the Docker Image**:
+
+   ```bash
+   docker build -t <your-dockerhub-username>/game-api:latest .
+   docker login
+   docker push <your-dockerhub-username>/game-api:latest
+   ```
+
+   - Replace `<your-dockerhub-username>` with your Docker Hub username.
+   - This updates the image in Docker Hub for Kubernetes to pull.
+
+3. **Update the Deployment to Pull the New Image**:
+
+   ```bash
+   kubectl apply -f game-catalog-pvc.yaml
+   kubectl apply -f game-catalog-deployment.yaml
+   kubectl apply -f game-catalog-service.yaml
+   kubectl delete pod -l app=game-api
+
+   ```
+
+   - `kubectl apply` ensures the Deployment uses the latest configuration.
+     ...

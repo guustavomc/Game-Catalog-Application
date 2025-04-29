@@ -246,6 +246,9 @@ The application is deployed using a `Deployment` and exposed via a `Service`. Op
              limits:
                memory: "512Mi"
                cpu: "500m"
+           volumeMounts:
+              - name: data-volume
+                mountPath: /data
            livenessProbe:
              httpGet:
                path: /api/game
@@ -281,11 +284,32 @@ The application is deployed using a `Deployment` and exposed via a `Service`. Op
      type: NodePort
    ```
 
+3. **Create the Persistent Volume** (`game-catalog-pvc.yaml`):
+
+- Since app writes and reads a /data/Games.json file inside the container,
+  we need to attach a Persistent Volume (PVC) to your pods, otherwise when a pod dies and restarts, it will lose all Games.json data.
+
+    ```yaml
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: game-api-pvc
+        namespace: default
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+   ```
+
+
 3. **Apply the Manifests**:
 
    ```bash
-   kubectl apply -f game-api-deployment.yaml
-   kubectl apply -f game-api-service.yaml
+   kubectl apply -f game-catalog-pvc.yaml
+   kubectl apply -f game-catalog-deployment.yaml
+   kubectl apply -f game-catalog-service.yaml
    ```
 
 4. **Verify the Deployment**:

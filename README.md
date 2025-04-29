@@ -72,16 +72,17 @@ Game-Catalog-Application/
 │   │   │   ├── Game.java
 ├── pom.xml
 ├── Dockerfile
-├── game-deployment.yaml
-├── game-service.yaml
-├── game-ingress.yaml
+├── game-catalog-deployment.yaml
+├── game-catalog-service.yaml
+├── game-catalog-pvc.yaml
 ├── README.md
-├── Games.json
+├── data
+    ├── Games.json
 ```
 
 - `Games.json`: Contains Pokémon data.
 - `Dockerfile`: Defines the Docker image build process.
-- Kubernetes manifests (`game-deployment.yaml`, `game-service.yaml`): Define the Kubernetes resources.
+- Kubernetes manifests (`game-catalog-deployment.yaml`, `game-catalog-service.yaml`,`game-catalog-pvc.yaml`): Define the Kubernetes resources.
 
 ## Step 1: Build the JAR
 
@@ -94,7 +95,6 @@ The application is built using Maven to create an executable JAR file.
    ```
 
    - This compiles the code, runs the build, and generates `target/Game-Catalog-Application-1.0-SNAPSHOT.jar`.
-   - The `-DskipTests` flag skips tests for faster builds (ensure tests pass if you have them).
    
 
 2. **Run the Application Locally** (Optional):
@@ -156,7 +156,6 @@ The application is packaged into a Docker container for deployment.
 
    ```bash
    docker run -p 8080:8080 -v ${PWD}/data:/data game-api
-
    ```
 
     - Maps port `8080` on the host to `8080` in the container.
@@ -261,6 +260,10 @@ The application is deployed using a `Deployment` and exposed via a `Service`. Op
                port: 8080
              initialDelaySeconds: 5
              periodSeconds: 5
+         volumes:
+              - name: data-volume
+                persistentVolumeClaim:
+                  claimName: game-api-pvc
    ```
 
    - **Important**: Replace `<your-dockerhub-username>` with your Docker Hub username in the `image` field. If you used the local image with `kind load docker-image`, use `image: game-api:latest` instead.
@@ -356,100 +359,82 @@ The `NodePort` Service exposes the API on a high port (e.g., `30080`).
 
    - Access the API at `http://localhost:8080/api/game`.
 
-### 3.5 Optional: Set Up Ingress
 
-For HTTP access with a domain (e.g., `pokedex.local`), use an Ingress.
-
-1. **Enable the Ingress Controller in Kind**: Create a Kind cluster with Ingress support by using a config file (`kind-config.yaml`):
-
-   ```yaml
-   kind: Cluster
-   apiVersion: kind.x-k8s.io/v1alpha4
-   nodes:
-   - role: control-plane
-     kubeadmConfigPatches:
-     - |
-       kind: InitConfiguration
-       nodeRegistration:
-         kubeletExtraArgs:
-           node-labels: "ingress-ready=true"
-     extraPortMappings:
-     - containerPort: 80
-       hostPort: 80
-       protocol: TCP
-     - containerPort: 443
-       hostPort: 443
-       protocol: TCP
-   ```
-
-   Create the cluster:
-
-   ```bash
-   kind create cluster --name pokedex --config kind-config.yaml
-   ```
-
-2. **Install NGINX Ingress Controller**:
-
-   ```bash
-   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-   ```
-
-3. **Create the Ingress Manifest** (`pokedex-ingress.yaml`):
-
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: Ingress
-   metadata:
-     name: pokedex-api-ingress
-     namespace: default
-     annotations:
-       nginx.ingress.kubernetes.io/rewrite-target: /
-   spec:
-     rules:
-     - host: pokedex.local
-       http:
-         paths:
-         - path: /
-           pathType: Prefix
-           backend:
-             service:
-               name: pokedex-api-service
-               port:
-                 number: 80
-   ```
-
-4. **Apply the Ingress**:
-
-   ```bash
-   kubectl apply -f pokedex-ingress.yaml
-   ```
-
-5. **Update Hosts File**:
-   - **Windows**: Edit `C:\Windows\System32\drivers\etc\hosts` (requires admin privileges):
-     ```powershell
-     Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "127.0.0.1 pokedex.local" -Force
-     ```
-      - Run PowerShell as Administrator.
-   - **macOS/Linux**:
-     ```bash
-     echo "127.0.0.1 pokedex.local" | sudo tee -a /etc/hosts
-     ```
-
-6. **Test the Ingress**:
-
-   ```bash
-   curl http://pokedex.local/api/pokemon
-   ```
-
-   **Windows Alternative** (PowerShell):
-   ```powershell
-   Invoke-WebRequest -Uri http://pokedex.local/api/pokemon
 
 ## Troubleshooting
 
+## Restarting After a Reboot
+
+If you shut down your PC and want to restart the `game-api` cluster, follow these steps:
+
+1. **Start Docker Desktop**:
+
+   - Ensure Docker Desktop is running (open it manually if needed).
+
+   - Verify:
+
+     ```powershell
+     docker ps
+     ```
+
+2. **Verify the Kind Cluster**:
+
+   ```bash
+   kind get clusters
+   kubectl cluster-info --context kind-game-catalog
+   ```
+
+   - If the cluster is missing, recreate it:
+
+     ```bash
+     kind create cluster --name game-catalog
+     ```
+
+      - For Ingress, use:
+
+        ```bash
+        kind create cluster --name game-catalog --config kind-config.yaml
+        ```
+
+3. **Check Kubernetes Resources**:
+
+   ```bash
+   kubectl get deployments
+   kubectl get pods
+   kubectl get services
+   ```
+
+   - If resources are missing, reapply manifests:
+
+     ```bash
+     kubectl apply -f game-catalog-pvc.yaml
+     kubectl apply -f game-catalog-deployment.yaml
+     kubectl apply -f game-catalog-service.yaml
+     ```
+
+4. **Test the API**:
+
+   ```bash
+   kubectl port-forward service/game-api-service 8080:80
+   ```
+
+   - Access: `http://localhost:8080/api/game`.
+
+   - Or use NodePort:
+
+     ```bash
+     kubectl get nodes -o wide
+     curl http://<INTERNAL-IP>:30080/api/game
+     ```
+
+     **Windows Alternative**:
+
+     ```powershell
+     Invoke-WebRequest -Uri http://<INTERNAL-IP>:30080/api/game
+
 ## If You Modify the Code
 
-If you change the application code (e.g., update `PokedexController.java` or `pokedex.json`):
+If you change the application code (e.g., update `GameController.java` or `Games.json`):
 
 1. **Rebuild the JAR**:
 

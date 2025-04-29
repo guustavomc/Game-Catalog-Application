@@ -177,3 +177,249 @@ The application is packaged into a Docker container for deployment.
 
     - Replace `<your-dockerhub-username>` with your Docker Hub username.
     - This makes the image accessible to Kubernetes clusters, including Kind.
+
+## Step 3: Deploy to Kubernetes with Kind
+
+We use **Kind** to run a local Kubernetes cluster and deploy the API using Kubernetes manifests.
+
+### 3.1 Set Up a Kind Cluster
+
+1. **Create a Kind Cluster**:
+
+   ```bash
+   kind create cluster --name game-catalog
+   ```
+
+   - This starts a local Kubernetes cluster named `game-catalog`.
+
+2. **Verify the Cluster**:
+
+   ```bash
+   kubectl cluster-info --context kind-game-catalog
+   ```
+
+   - Ensures `kubectl` is connected to the Kind cluster.
+
+### 3.2 Load the Docker Image into Kind (Optional)
+
+If you prefer not to use Docker Hub, you can load the local `game-catalog` image into Kind:
+
+```bash
+kind load docker-image game-api:latest --name game-catalog
+```
+
+- This makes the image available to the Kind cluster without needing a registry. Skip this step if you pushed the image to Docker Hub.
+
+### 3.3 Deploy Kubernetes Resources
+
+The application is deployed using a `Deployment` and exposed via a `Service`. Optionally, an `Ingress` can be used for HTTP access.
+
+1. **Create the Deployment Manifest** (`game-catalog-deployment.yaml`):
+
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: game-api
+     namespace: default
+     labels:
+       app: game-api
+   spec:
+     replicas: 2
+     selector:
+       matchLabels:
+         app: game-api
+     template:
+       metadata:
+         labels:
+           app: game-api
+       spec:
+         containers:
+         - name: game-api
+           image: <your-dockerhub-username>/game-api:latest
+           ports:
+           - containerPort: 8080
+           resources:
+             requests:
+               memory: "256Mi"
+               cpu: "250m"
+             limits:
+               memory: "512Mi"
+               cpu: "500m"
+           livenessProbe:
+             httpGet:
+               path: /api/game
+               port: 8080
+             initialDelaySeconds: 15
+             periodSeconds: 10
+           readinessProbe:
+             httpGet:
+               path: /api/game
+               port: 8080
+             initialDelaySeconds: 5
+             periodSeconds: 5
+   ```
+
+   - **Important**: Replace `<your-dockerhub-username>` with your Docker Hub username in the `image` field. If you used the local image with `kind load docker-image`, use `image: game-api:latest` instead.
+
+2. **Create the Service Manifest** (`game-catalog-service.yaml`):
+
+   ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: game-api-service
+     namespace: default
+   spec:
+     selector:
+       app: game-api
+     ports:
+       - protocol: TCP
+         port: 80
+         targetPort: 8080
+         nodePort: 30080
+     type: NodePort
+   ```
+
+3. **Apply the Manifests**:
+
+   ```bash
+   kubectl apply -f game-api-deployment.yaml
+   kubectl apply -f game-api-service.yaml
+   ```
+
+4. **Verify the Deployment**:
+
+   ```bash
+   kubectl get deployments
+   kubectl get pods
+   kubectl get services
+   ```
+
+   - Ensure the `game-api` Deployment has 2/2 pods ready.
+   - Check that `game-api-service` is running with `type: NodePort`.
+
+### 3.4 Access the API
+
+The `NodePort` Service exposes the API on a high port (e.g., `30080`).
+
+1. **Get the Cluster IP**:
+
+   ```bash
+   kubectl get nodes -o wide
+   ```
+
+   - Note the `INTERNAL-IP` of the Kind control plane node (e.g., `172.18.0.2`).
+
+2. **Test the API**:
+
+   ```bash
+   curl http://<INTERNAL-IP>:30080/api/pokemon
+   curl http://<INTERNAL-IP>:30080/api/pokemon/id/1
+   curl http://<INTERNAL-IP>:30080/api/pokemon/search/Squirtle
+   curl http://<INTERNAL-IP>:30080/api/pokemon/type/Grass
+   ```
+
+   **Windows Alternative** (PowerShell):
+   ```powershell
+   Invoke-WebRequest -Uri http://<INTERNAL-IP>:30080/api/pokemon
+   ```
+
+   - Replace `<INTERNAL-IP>` with the node’s IP.
+
+3. **Port Forwarding** (Alternative):
+
+   ```bash
+   kubectl port-forward service/pokedex-api-service 8080:80
+   ```
+
+   - Access the API at `http://localhost:8080/api/pokemon`.
+
+### 3.5 Optional: Set Up Ingress
+
+For HTTP access with a domain (e.g., `pokedex.local`), use an Ingress.
+
+1. **Enable the Ingress Controller in Kind**: Create a Kind cluster with Ingress support by using a config file (`kind-config.yaml`):
+
+   ```yaml
+   kind: Cluster
+   apiVersion: kind.x-k8s.io/v1alpha4
+   nodes:
+   - role: control-plane
+     kubeadmConfigPatches:
+     - |
+       kind: InitConfiguration
+       nodeRegistration:
+         kubeletExtraArgs:
+           node-labels: "ingress-ready=true"
+     extraPortMappings:
+     - containerPort: 80
+       hostPort: 80
+       protocol: TCP
+     - containerPort: 443
+       hostPort: 443
+       protocol: TCP
+   ```
+
+   Create the cluster:
+
+   ```bash
+   kind create cluster --name pokedex --config kind-config.yaml
+   ```
+
+2. **Install NGINX Ingress Controller**:
+
+   ```bash
+   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+   ```
+
+3. **Create the Ingress Manifest** (`pokedex-ingress.yaml`):
+
+   ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: pokedex-api-ingress
+     namespace: default
+     annotations:
+       nginx.ingress.kubernetes.io/rewrite-target: /
+   spec:
+     rules:
+     - host: pokedex.local
+       http:
+         paths:
+         - path: /
+           pathType: Prefix
+           backend:
+             service:
+               name: pokedex-api-service
+               port:
+                 number: 80
+   ```
+
+4. **Apply the Ingress**:
+
+   ```bash
+   kubectl apply -f pokedex-ingress.yaml
+   ```
+
+5. **Update Hosts File**:
+   - **Windows**: Edit `C:\Windows\System32\drivers\etc\hosts` (requires admin privileges):
+     ```powershell
+     Add-Content -Path "C:\Windows\System32\drivers\etc\hosts" -Value "127.0.0.1 pokedex.local" -Force
+     ```
+      - Run PowerShell as Administrator.
+   - **macOS/Linux**:
+     ```bash
+     echo "127.0.0.1 pokedex.local" | sudo tee -a /etc/hosts
+     ```
+
+6. **Test the Ingress**:
+
+   ```bash
+   curl http://pokedex.local/api/pokemon
+   ```
+
+   **Windows Alternative** (PowerShell):
+   ```powershell
+   Invoke-WebRequest -Uri http://pokedex.local/api/pokemon

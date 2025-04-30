@@ -363,6 +363,35 @@ The `NodePort` Service exposes the API on a high port (e.g., `30080`).
 
 ## Troubleshooting
 
+## Delete Kubernetes Cluster
+
+
+   ```bash
+    kind delete cluster
+   ```
+
+   - If you named the cluster:
+   ```bash
+    kind delete cluster --name my-cluster
+   ```
+
+   - If we just want to delete your project (not the entire cluster):
+   ```bash
+   kubectl delete deployment game-api
+   kubectl delete service game-api-service
+   kubectl delete pvc game-api-pvc
+   kubectl delete pod pvc-editor
+   ```
+
+   - If we want to verify what is running:
+   ```bash
+   kubectl get all --all-namespaces
+   ```
+
+   - If we want to verify what is running:
+   ```bash
+   kubectl config current-context
+   ```
 ## Restarting After a Reboot
 
 If you shut down your PC and want to restart the `game-api` cluster, follow these steps:

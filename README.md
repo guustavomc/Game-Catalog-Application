@@ -359,6 +359,113 @@ The `NodePort` Service exposes the API on a high port (e.g., `30080`).
 
    - Access the API at `http://localhost:8080/api/game`.
 
+### 3.5 Ingress
+
+Apply the official Kind-specific deployment:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.0/deploy/static/provider/kind/deploy.yaml
+```
+
+Wait about **30–60 seconds**, then check the pods:
+
+```bash
+kubectl get pods -n ingress-nginx
+```
+
+You should see the controller pod initializing and eventually show `STATUS: Running`.
+
+---
+
+1. Label the Kind Node
+
+Get your Kind node name:
+
+```bash
+kubectl get nodes
+```
+
+Then label it:
+
+```bash
+kubectl label node <your-node-name> ingress-ready=true
+```
+
+_The node name is usually something like `kind-control-plane`._
+
+---
+
+2. Wait Until the Controller is Ready
+
+- Linux/macOS
+```bash
+kubectl wait --namespace ingress-nginx \
+  --for=condition=Ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+```
+
+- Windows
+```bash
+kubectl wait --namespace ingress-nginx --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+```
+
+
+
+
+---
+
+3. Create the Ingress Resource
+
+Save your Ingress manifest as `game-catalog-ingress.yaml`. Example:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: game-catalog-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/game
+            pathType: Prefix
+            backend:
+              service:
+                name: game-catalog-service
+                port:
+                  number: 8080
+```
+
+Then apply it:
+
+```bash
+kubectl apply -f game-catalog-ingress.yaml
+```
+
+---
+
+4. Port Forward to Localhost
+
+Kind does not expose NodePorts directly. Forward traffic from `localhost:80` to the Ingress Controller:
+
+```bash
+kubectl get svc -n ingress-nginx
+kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 80:80
+```
+
+Now access your app at:
+
+```
+http://localhost/api/game
+```
+
+---
+
 
 
 ## Troubleshooting
